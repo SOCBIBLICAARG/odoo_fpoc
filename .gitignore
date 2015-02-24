@@ -1,5 +1,4 @@
-fp.db
-fp.db.log
+*.pyc
 *~
 .*.swp
-*.pyc
+.ropeproject
