@@ -146,14 +146,14 @@ class epson_ar_fiscal_tf_printer_configuration(osv.osv):
                     key, rule = self.epson_type_paper_status.get(conf.type, (False, False))
                     stat['paper_state'] = rule.get(stat.get(key, 'unknown'),'unknown')
                 if 'fiscal_state' not in stat:
-                    stat['fiscal_state'] = 'open' if stat['inFiscalJournal'] else 'close'
+                    stat['fiscal_state'] = 'open' if stat.get('inFiscalJournal', False) else 'close'
                 if 'printer_state' not in stat:
-                    stat['printer_state'] = [ v for v in ['deviceopen' if stat['isPrinterOpen']      else False,
-                                                          'onerror'    if stat['inError']            else False,
-                                                          'offline'    if stat['isOffline']          else False,
-                                                          'nomemory'   if stat['memStatus']          else False,
-                                                          'nopaper'    if stat['slipHasPaper']       else False,
-                                                          'printing'   if stat['documentInProgress'] else False,
+                    stat['printer_state'] = [ v for v in ['deviceopen' if stat.get('isPrinterOpen', False)      else False,
+                                                          'onerror'    if stat.get('inError', False)            else False,
+                                                          'offline'    if stat.get('isOffline', False)          else False,
+                                                          'nomemory'   if stat.get('memStatus', False)          else False,
+                                                          'nopaper'    if stat.get('slipHasPaper', False)       else False,
+                                                          'printing'   if stat.get('documentInProgress', False) else False,
                                                           'ready'] if v ][0]
         return r
 
