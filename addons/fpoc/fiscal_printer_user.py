@@ -9,9 +9,9 @@ class fiscal_printer_configuration(osv.osv):
 
     Must be used as entry for diferent calls:
 
-    open_fiscal_ticket
+    open_ticket_factura
     add_fiscal_item
-    close_fiscal_ticket
+    close_ticket_factura
     """
 
     _name = 'fpoc.configuration'
@@ -110,10 +110,9 @@ class fiscal_printer_user(osv.AbstractModel):
                                                 ], help="Check printer status."),
     }
 
-
-    def make_fiscal_ticket(self, cr, uid, ids, ticket, context=None):
+    def make_ticket_factura(self, cr, uid, ids, ticket, context=None):
         """
-        Create Fiscal Ticket.
+        Create Ticket Factura.
         """
         fp_obj = self.pool.get('fpoc.fiscal_printer')
         context = context or {}
@@ -131,7 +130,7 @@ class fiscal_printer_user(osv.AbstractModel):
                                        'ticket. Actual status is %s') % usr.fiscal_printer_fiscal_state)
             options = usr.fiscal_printer_configuration_id.toDict()[usr.fiscal_printer_configuration_id.id]
             fp_id = usr.fiscal_printer_id.id
-            r[usr.id] = fp_obj.make_fiscal_ticket(cr, uid, [fp_id],
+            r[usr.id] = fp_obj.make_ticket_factura(cr, uid, [fp_id],
                                                   options=options, ticket=ticket,
                                                   context=context)[fp_id]
             if isinstance(r[usr.id], RuntimeError) and r[usr.id].message == "Timeout":
@@ -139,7 +138,7 @@ class fiscal_printer_user(osv.AbstractModel):
                                      _('Timeout happen!!'))
         return r
 
-    def cancel_fiscal_ticket(self, cr, uid, ids, context=None):
+    def cancel_ticket_factura(self, cr, uid, ids, context=None):
         """
         """
         fp_obj = self.pool.get('fpoc.fiscal_printer')
@@ -147,7 +146,47 @@ class fiscal_printer_user(osv.AbstractModel):
         r = {}
         for usr in self.browse(cr, uid, ids, context):
             fp_id = usr.fiscal_printer_id.id
-            r[usr.id] = fp_obj.cancel_fiscal_ticket(cr, uid, fp_id,
+            r[usr.id] = fp_obj.cancel_ticket_factura(cr, uid, fp_id,
+                                                   context=context)[fp_id]
+        return r
+
+    def make_ticket_notacredito(self, cr, uid, ids, ticket, context=None):
+        """
+        Create Ticket Factura.
+        """
+        fp_obj = self.pool.get('fpoc.fiscal_printer')
+        context = context or {}
+        r = {}
+        for usr in self.browse(cr, uid, ids, context):
+            if not usr.fiscal_printer_id:
+                raise osv.except_osv(_('Error!'),
+                                     _('Selected journal has not printer associated.'))
+            if not usr.fiscal_printer_configuration_id:
+                raise osv.except_osv(_('Error!'),
+                                     _('Selected journal has not configuration associated.'))
+            if not usr.fiscal_printer_fiscal_state == 'open':
+                raise osv.except_osv(_('Error!'),
+                                     _('Need open fiscal status to print a '
+                                       'ticket. Actual status is %s') % usr.fiscal_printer_fiscal_state)
+            options = usr.fiscal_printer_configuration_id.toDict()[usr.fiscal_printer_configuration_id.id]
+            fp_id = usr.fiscal_printer_id.id
+            r[usr.id] = fp_obj.make_ticket_notacredito(cr, uid, [fp_id],
+                                                  options=options, ticket=ticket,
+                                                  context=context)[fp_id]
+            if isinstance(r[usr.id], RuntimeError) and r[usr.id].message == "Timeout":
+                raise osv.except_osv(_('Error!'),
+                                     _('Timeout happen!!'))
+        return r
+
+    def cancel_ticket_notacredito(self, cr, uid, ids, context=None):
+        """
+        """
+        fp_obj = self.pool.get('fpoc.fiscal_printer')
+        context = context or {}
+        r = {}
+        for usr in self.browse(cr, uid, ids, context):
+            fp_id = usr.fiscal_printer_id.id
+            r[usr.id] = fp_obj.cancel_ticket_notacredito(cr, uid, fp_id,
                                                    context=context)[fp_id]
         return r
 
