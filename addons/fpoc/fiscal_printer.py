@@ -28,7 +28,7 @@ from openerp.tools.translate import _
 from controllers.main import do_event
 from datetime import datetime
 
-from openerp.addons.fpoc.controllers.main import DenialService
+from openerp.addons.fpoc.controllers.main import DenialService, event_hub
 
 class fiscal_printer_disconnected(osv.TransientModel):
     """
@@ -132,6 +132,14 @@ class fiscal_printer(osv.osv):
                 }
         return r
 
+    def _get_net_status(self, cr, uid, ids, field_name, arg, context=None):
+        r = {}
+        for fp in self.browse(cr, uid, ids):
+            event_hub_id = "%s:%s" % (fp.session_id, fp.name)
+            r[fp.id] = ("connected" if event_hub_id in event_hub
+                        else "disconnected")
+        return r
+
     _name = 'fpoc.fiscal_printer'
     _description = 'fiscal_printer'
 
@@ -145,6 +153,7 @@ class fiscal_printer(osv.osv):
         'fiscalStatus':  fields.function(_get_status, type="char", method=True, readonly="True", multi="state", string='Fiscal status'),
         'clock':         fields.function(_get_status, type="datetime", method=True, readonly="True", multi="state", string='Clock'),
         'session_id': fields.char(string='session_id'),
+        'net_status': fields.function(_get_net_status, type='char', method=True, readonly=True, string='Network Status'),
     }
 
     _defaults = {
