@@ -85,18 +85,13 @@
             <field name="name">fpoc.fpoc.tree</field>
             <field name="model">fpoc.fiscal_printer</field>
             <field name="arch" type="xml">
-                <tree string="Fiscal Printer"
-                    >
-                    <field name="name"
-                        />
-                    <field name="protocol"
-                        />
-                    <field name="model"
-                        />
-                    <field name="serialNumber"
-                        />
-                    <field name="lastUpdate"
-                        />
+                <tree string="Fiscal Printer" >
+                    <field name="name" />
+                    <field name="protocol" />
+                    <field name="model" />
+                    <field name="serialNumber" />
+                    <field name="net_status" />
+                    <field name="lastUpdate" />
                 </tree>
             </field>
         </record>

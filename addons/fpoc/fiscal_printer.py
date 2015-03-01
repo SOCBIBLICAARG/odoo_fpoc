@@ -28,7 +28,7 @@ from openerp.tools.translate import _
 from controllers.main import do_event
 from datetime import datetime
 
-from openerp.addons.fpoc.controllers.main import DenialService
+from openerp.addons.fpoc.controllers.main import DenialService, event_hub
 
 class fiscal_printer_disconnected(osv.TransientModel):
     """
@@ -50,7 +50,7 @@ class fiscal_printer_disconnected(osv.TransientModel):
         cr.execute('SELECT COUNT(*) FROM %s' % self._table)
         count = cr.fetchone()[0]
         if not force and count > 0:
-            return 
+            return
         if count > 0:
             cr.execute('DELETE FROM %s' % self._table)
         t_fp_obj = self.pool.get('fpoc.fiscal_printer')
@@ -113,7 +113,7 @@ class fiscal_printer(osv.osv):
     """
 
     def _get_status(self, cr, uid, ids, field_name, arg, context=None):
-        s = self.get_state(cr, uid, ids, context) 
+        s = self.get_state(cr, uid, ids, context)
 
         r = {}
         for p_id in ids:
@@ -132,6 +132,14 @@ class fiscal_printer(osv.osv):
                 }
         return r
 
+    def _get_net_status(self, cr, uid, ids, field_name, arg, context=None):
+        r = {}
+        for fp in self.browse(cr, uid, ids):
+            event_hub_id = "%s:%s" % (fp.session_id, fp.name)
+            r[fp.id] = ("connected" if event_hub_id in event_hub
+                        else "disconnected")
+        return r
+
     _name = 'fpoc.fiscal_printer'
     _description = 'fiscal_printer'
 
@@ -145,6 +153,7 @@ class fiscal_printer(osv.osv):
         'fiscalStatus':  fields.function(_get_status, type="char", method=True, readonly="True", multi="state", string='Fiscal status'),
         'clock':         fields.function(_get_status, type="datetime", method=True, readonly="True", multi="state", string='Clock'),
         'session_id': fields.char(string='session_id'),
+        'net_status': fields.function(_get_net_status, type='char', method=True, readonly=True, string='Network Status'),
     }
 
     _defaults = {
@@ -176,22 +185,22 @@ class fiscal_printer(osv.osv):
             do_event('advance_paper', {'name': fp.name},
                      session_id=fp.session_id, printer_id=fp.name)
         return True
-        
+
     def cut_paper(self, cr, uid, ids, context=None):
         for fp in self.browse(cr, uid, ids):
             do_event('cut_paper', {'name': fp.name},
                      session_id=fp.session_id, printer_id=fp.name)
         return True
-        
+
     def open_fiscal_journal(self, cr, uid, ids, context=None):
         for fp in self.browse(cr, uid, ids):
             do_event('open_fiscal_journal', {'name': fp.name},
                      session_id=fp.session_id, printer_id=fp.name)
         return True
 
-    def cancel_fiscal_ticket(self, cr, uid, ids, context=None):
+    def cancel_ticket_factura(self, cr, uid, ids, context=None):
         for fp in self.browse(cr, uid, ids):
-            do_event('cancel_fiscal_ticket', {'name': fp.name},
+            do_event('cancel_ticket_factura', {'name': fp.name},
                      session_id=fp.session_id, printer_id=fp.name)
         return True
 
@@ -226,28 +235,50 @@ class fiscal_printer(osv.osv):
             r[fp.id] = event_result.pop() if event_result else False
         return r
 
-    def make_fiscal_ticket(self, cr, uid, ids, options={}, ticket={}, context=None):
+    def make_ticket_factura(self, cr, uid, ids, options={}, ticket={}, context=None):
         fparms = {}
         r = {}
         for fp in self.browse(cr, uid, ids):
             fparms['name'] = fp.name
             fparms['options'] = options
             fparms['ticket'] = ticket
-            event_result = do_event('make_fiscal_ticket', fparms,
+            event_result = do_event('make_ticket_factura', fparms,
                                     session_id=fp.session_id, printer_id=fp.name)
             r[fp.id] = event_result.pop() if event_result else False
         return r
 
-    def cancel_fiscal_ticket(self, cr, uid, ids, context=None):
-        fparms = {} 
+    def cancel_ticket_factura(self, cr, uid, ids, context=None):
+        fparms = {}
         r = {}
         for fp in self.browse(cr, uid, ids):
             fparms['name'] = fp.name
-            event_result = do_event('cancel_fiscal_ticket', fparms,
+            event_result = do_event('cancel_ticket_factura', fparms,
                                     session_id=fp.session_id, printer_id=fp.name)
             r[fp.id] = event_result.pop() if event_result else False
         return r
- 
+
+    def make_ticket_notacredito(self, cr, uid, ids, options={}, ticket={}, context=None):
+        fparms = {}
+        r = {}
+        for fp in self.browse(cr, uid, ids):
+            fparms['name'] = fp.name
+            fparms['options'] = options
+            fparms['ticket'] = ticket
+            event_result = do_event('make_ticket_notacredito', fparms,
+                                    session_id=fp.session_id, printer_id=fp.name)
+            r[fp.id] = event_result.pop() if event_result else False
+        return r
+
+    def cancel_ticket_notacredito(self, cr, uid, ids, context=None):
+        fparms = {}
+        r = {}
+        for fp in self.browse(cr, uid, ids):
+            fparms['name'] = fp.name
+            event_result = do_event('cancel_ticket_notacredito', fparms,
+                                    session_id=fp.session_id, printer_id=fp.name)
+            r[fp.id] = event_result.pop() if event_result else False
+        return r
+
 fiscal_printer()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
