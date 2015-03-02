@@ -112,11 +112,12 @@ def do_event(event, data={}, session_id=None, printer_id=None, control=False):
     If client not response in 60 seg, then raise a DenialService. Else return the client result.
     """
     global event_id
-
     event_id += 1
+    my_event_id = event_id
+
     result = {}
     item = {
-        'id': event_id,
+        'id': my_event_id,
         'event': event,
         'data': json.dumps(data),
     }
@@ -133,13 +134,13 @@ def do_event(event, data={}, session_id=None, printer_id=None, control=False):
     _logger.debug("Send message '%s' to spools: %s" % (event, qids))
 
     for qid in qids:
-        event_event[event_id] = threading.Event()
-        event_result[event_id] = None
+        event_event[my_event_id] = threading.Event()
+        event_result[my_event_id] = None
         event_hub[qid].put(item)
-        w = event_event[event_id].wait(60)
+        w = event_event[my_event_id].wait(60)
         if not w: raise osv.except_osv(_('Error!'), _('Timeout happen!!'))
         _logger.debug("Return '%s': %s" % (qids, w))
-        result[qid] = event_result[event_id]
+        result[qid] = event_result[my_event_id]
         event_hub[qid].task_done()
 
     _logger.debug("Result from '%s' was: %s" % (qids, result))
@@ -230,7 +231,7 @@ class FiscalPrinterController(oeweb.Controller):
     def fp_info(self, req, printers, **kw):
         return do_return(req, printers);
 
-    def event_source_iter(self, event_id):
+    def event_source_iter(self, _event_id):
         qid = self.qid
 
         yield '\n\n' # Force connection recognition on client
