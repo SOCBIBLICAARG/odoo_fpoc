@@ -198,6 +198,11 @@ class FiscalPrinterController(oeweb.Controller):
         qid = ':'.join([sid, pid])
         self.qid = qid
 
+        if pid:
+            fp_obj = req.registry['fpoc.fiscal_printer']
+            fp_ids = fp_obj.search(req.cr, req.uid, [('name','=',pid)])
+            fp_obj.write(req.cr, req.uid, fp_ids, {'session_id': sid})
+
         if (qid in event_hub):
             _logger.debug("Close connection spool %s by duplication." % qid)
             return req.make_response('\n\nevent: close\n\n\n\n',
