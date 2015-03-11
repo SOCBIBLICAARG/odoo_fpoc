@@ -42,6 +42,7 @@ class fiscal_printer_disconnected(osv.TransientModel):
         'protocol': fields.char(string='Protocol'),
         'model': fields.char(string='Model'),
         'serialNumber': fields.char(string='Serial Number'),
+        'pos': fields.integer(string='Point of Sale'),
         'session_id': fields.char(string='Session'),
         'user_id': fields.many2one('res.users', string='Responsable'),
     }
@@ -68,6 +69,7 @@ class fiscal_printer_disconnected(osv.TransientModel):
                         'protocol': p['protocol'],
                         'model': p['model'],
                         'serialNumber': p['serialNumber'],
+                        'pos': p['pos'] or 9998,
                         'session_id': p['sid'],
                         'user_id': p['uid'],
                     }
@@ -92,6 +94,7 @@ class fiscal_printer_disconnected(osv.TransientModel):
                 'protocol': pri.protocol,
                 'model': pri.model,
                 'serialNumber': pri.serialNumber,
+                'pointOfSale': pri.pos,
             }
             fp_obj.create(cr, uid, values)
         return {
@@ -121,12 +124,14 @@ class fiscal_printer(osv.osv):
                 dt = datetime.strptime(s[p_id]['clock'], "%Y-%m-%d %H:%M:%S")
                 r[p_id] = {
                     'clock': dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    'pointOfSale': s[p_id].get('pointOfSale', 'Unknown'),
                     'printerStatus': s[p_id].get('strPrinterStatus', 'Unknown'),
                     'fiscalStatus': s[p_id].get('strFiscalStatus', 'Unknown'),
                 }
             else:
                 r[p_id]= {
                     'clock':False,
+                    'pointOfSale':False,
                     'printerStatus':'Offline',
                     'fiscalStatus': 'Offline',
                 }
@@ -148,6 +153,7 @@ class fiscal_printer(osv.osv):
         'protocol': fields.char(string='Protocol'),
         'model': fields.char(string='Model'),
         'serialNumber': fields.char(string='Serial Number (S/N)'),
+        'pointOfSale': fields.integer('Point of Sale'),
         'lastUpdate': fields.datetime(string='Last Update'),
         'printerStatus': fields.function(_get_status, type="char", method=True, readonly="True", multi="state", string='Printer status'),
         'fiscalStatus':  fields.function(_get_status, type="char", method=True, readonly="True", multi="state", string='Fiscal status'),
