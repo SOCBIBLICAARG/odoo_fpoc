@@ -135,7 +135,7 @@ class fiscal_printer_user(osv.AbstractModel):
                                                   context=context)[fp_id]
             if isinstance(r[usr.id], RuntimeError) and r[usr.id].message == "Timeout":
                 raise osv.except_osv(_('Error!'),
-                                     _('Timeout happen!!'))
+                                     _('Timeout happened!!'))
         return r
 
     def cancel_ticket_factura(self, cr, uid, ids, context=None):
